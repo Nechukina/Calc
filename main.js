@@ -43,14 +43,13 @@ function inputDigit(digit) {
             break;
     }
 
-    updateDisplay();
+display.value = calculator.displayValue;
 }
 
 function inputDecimal(dot) {
-
     const { displayValue, waitingForSecondOperand } = calculator;
-
     resetCalculatorResult();
+
     if (displayValue.length >= 6 && !waitingForSecondOperand) {
         alert(errorMessages.decimalLengthExceeded);
         return;
@@ -69,7 +68,7 @@ function inputDecimal(dot) {
             break;
     }
 
-    updateDisplay();
+    display.value = calculator.displayValue;
 }
 
 function handleOperator(nextOperator) {
@@ -107,7 +106,7 @@ function handleOperator(nextOperator) {
 
     calculator.waitingForSecondOperand = true;
     calculator.operator = nextOperator;
-    updateDisplay();
+    display.value = calculator.displayValue;
 }
 
 function handleEqual() {
@@ -131,7 +130,7 @@ function handleEqual() {
                 }
                 resetCalculator();
                 calculator.result = String(result);
-                updateDisplay();
+                display.value = calculator.result;
                 break;
             }
     }
@@ -170,20 +169,23 @@ function changeSign() {
 
     if (calculator.result) {
         calculator.result = (-parseFloat(calculator.result)).toString();
+        display.value = calculator.result;
+
     } else {
         calculator.displayValue = (-parseFloat(calculator.displayValue)).toString();
+        display.value = calculator.displayValue;
+
     }
-    updateDisplay();
 }
 
 
 function deleteLastSymbol() {
-    let { displayValue, firstOperand, result } = calculator;
+    let { firstOperand, result } = calculator;
     if (result) {
         calculator.displayValue = result;
-        displayValue = result;
         resetCalculatorResult();
     }
+
     calculator.displayValue = calculator.displayValue.slice(0, -1);
     if (!calculator.displayValue.length || calculator.displayValue === '-0' || calculator.displayValue === '-') {
         calculator.displayValue = '0';
@@ -191,13 +193,12 @@ function deleteLastSymbol() {
     if (firstOperand !== null) {
         calculator.firstOperand = Number(calculator.displayValue);
     }
-    updateDisplay();
+    display.value = calculator.displayValue;
+
 }
 
 function resetCalculatorResult() {
-    if (calculator.result) {
-        calculator.result = null;
-    }
+    calculator.result = calculator.result ? null : calculator.result;
 }
 
 function resetCalculator() {
@@ -206,15 +207,7 @@ function resetCalculator() {
     calculator.operator = null;
     calculator.waitingForSecondOperand = false;
     calculator.result = null;
-    updateDisplay();
-}
-
-function updateDisplay() {
-    if (calculator.result) {
-        display.value = calculator.result;
-    } else {
-        display.value = calculator.displayValue;
-    }
+    display.value = calculator.displayValue;
 }
 
 document.querySelector('.calculator-buttons').addEventListener('click', (event) => {
@@ -245,4 +238,5 @@ document.querySelector('.calculator-buttons').addEventListener('click', (event) 
     }
 });
 
-updateDisplay();
+display.value = calculator.displayValue;
+
