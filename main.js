@@ -23,9 +23,12 @@ const errorMessages = {
 };
 
 function inputDigit(digit) {
+    debugger;
+    const { displayValue, waitingForSecondOperand, result } = calculator;
 
-    const { displayValue, waitingForSecondOperand } = calculator;
-    resetCalculatorResult();
+    if (result) {
+        calculator.result =  null;
+    }
 
     switch (true) {
         case waitingForSecondOperand:
@@ -43,20 +46,23 @@ function inputDigit(digit) {
             break;
     }
 
-display.value = calculator.displayValue;
 }
 
 function inputDecimal(dot) {
-    const { displayValue, waitingForSecondOperand } = calculator;
-    resetCalculatorResult();
+    const { displayValue, waitingForSecondOperand, result } = calculator;
 
-    if (displayValue.length >= 6 && !waitingForSecondOperand) {
-        alert(errorMessages.decimalLengthExceeded);
-        return;
-    } else if (displayValue.includes(dot) && !waitingForSecondOperand) {
+    if (result) {
+        calculator.result =  null;
+    }
+
+    if (displayValue.includes(dot) && !waitingForSecondOperand) {
         alert(errorMessages.decimalAlreadyPresent);
         return;
+    } else if (displayValue.length >= maximumInputWithDecimal && !waitingForSecondOperand) {
+        alert(errorMessages.decimalLengthExceeded);
+        return;
     }
+
 
     switch (true) {
         case calculator.waitingForSecondOperand:
@@ -67,19 +73,16 @@ function inputDecimal(dot) {
             calculator.displayValue += dot;
             break;
     }
-
-    display.value = calculator.displayValue;
 }
 
 function handleOperator(nextOperator) {
     const { firstOperand, displayValue, operator, waitingForSecondOperand, result } = calculator;
     let inputValue;
     if (result) {
-        inputValue = parseFloat(result);
+        inputValue = result;
     } else {
-        inputValue = parseFloat(displayValue);
+        inputValue = displayValue;
     }
-
 
     switch (true) {
         case operator && waitingForSecondOperand:
@@ -87,7 +90,7 @@ function handleOperator(nextOperator) {
             return;
         case firstOperand === null:
             calculator.firstOperand = inputValue;
-            calculator.displayValue = String(inputValue);
+            calculator.displayValue = inputValue;
             break;
         default:
             const calcResult = doCalculation(operator, firstOperand, inputValue);
@@ -96,22 +99,21 @@ function handleOperator(nextOperator) {
             }
             if (Math.abs(calcResult) > safeMaxNumb || calcResult.toString().length > maximumOutput) {
                 alert(errorMessages.largeNumber);
-                resetCalculator();
+                location.reload();
                 return;
             }
-            calculator.displayValue = String(calcResult);
+            calculator.displayValue = calcResult;
             calculator.firstOperand = calcResult;
             break;
     }
 
     calculator.waitingForSecondOperand = true;
     calculator.operator = nextOperator;
-    display.value = calculator.displayValue;
 }
 
 function handleEqual() {
     const { firstOperand, displayValue, operator, waitingForSecondOperand } = calculator;
-    const inputValue = parseFloat(displayValue);
+    const inputValue = displayValue;
 
     switch (true) {
         case firstOperand === null:
@@ -121,16 +123,20 @@ function handleEqual() {
             alert(errorMessages.missingSecondOperand);
             return;
         case firstOperand !== null:
-            const result = doCalculation(operator, firstOperand, inputValue);
-            if (result !== null) {
-                if (Math.abs(result) > safeMaxNumb || result.toString().length > maximumOutput) {
+            const calcResult = doCalculation(operator, firstOperand, inputValue);
+            if (calcResult !== null) {
+                if (Math.abs(calcResult) > safeMaxNumb || calcResult.toString().length > maximumOutput) {
                     alert(errorMessages.largeNumber);
-                    resetCalculator();
+                    location.reload();
                     return;
                 }
-                resetCalculator();
-                calculator.result = String(result);
-                display.value = calculator.result;
+                //сброс калькулятора
+                calculator.displayValue = '0';
+                calculator.firstOperand = null;
+                calculator.operator = null;
+                calculator.waitingForSecondOperand = false;
+                //вывод результата вычислений на экран
+                calculator.result = calcResult;
                 break;
             }
     }
@@ -138,22 +144,26 @@ function handleEqual() {
 
 function doCalculation(operator, firstOperand, secondOperand) {
     let result;
-    if (operator === '/' && secondOperand === 0) {
+    const numFirstOperand = parseFloat(firstOperand);
+    const numSecondOperand = parseFloat(secondOperand);
+
+    if (operator === '/' && secondOperand === '0') {
         alert(errorMessages.divisionByZero);
         return null;
     }
+
     switch (operator) {
         case '+':
-            result = firstOperand + secondOperand;
+            result = numFirstOperand + numSecondOperand;
             break;
         case '-':
-            result = firstOperand - secondOperand;
+            result = numFirstOperand - numSecondOperand;
             break;
         case '*':
-            result = firstOperand * secondOperand;
+            result = numFirstOperand * numSecondOperand;
             break;
         case '/':
-            result = firstOperand / secondOperand;
+            result = numFirstOperand / numSecondOperand;
             break;
     }
 
@@ -162,53 +172,39 @@ function doCalculation(operator, firstOperand, secondOperand) {
         result = result.toFixed(3);
     }
 
-    return result;
+    return String(result);
 }
 
 function changeSign() {
 
     if (calculator.result) {
         calculator.result = (-parseFloat(calculator.result)).toString();
-        display.value = calculator.result;
-
     } else {
         calculator.displayValue = (-parseFloat(calculator.displayValue)).toString();
-        display.value = calculator.displayValue;
-
     }
 }
 
 
 function deleteLastSymbol() {
     let { firstOperand, result } = calculator;
+
     if (result) {
         calculator.displayValue = result;
-        resetCalculatorResult();
+        calculator.result =  null;
     }
 
     calculator.displayValue = calculator.displayValue.slice(0, -1);
+
     if (!calculator.displayValue.length || calculator.displayValue === '-0' || calculator.displayValue === '-') {
         calculator.displayValue = '0';
     }
+
     if (firstOperand !== null) {
-        calculator.firstOperand = Number(calculator.displayValue);
+        calculator.firstOperand = calculator.displayValue;
     }
-    display.value = calculator.displayValue;
 
 }
 
-function resetCalculatorResult() {
-    calculator.result = calculator.result ? null : calculator.result;
-}
-
-function resetCalculator() {
-    calculator.displayValue = '0';
-    calculator.firstOperand = null;
-    calculator.operator = null;
-    calculator.waitingForSecondOperand = false;
-    calculator.result = null;
-    display.value = calculator.displayValue;
-}
 
 document.querySelector('.calculator-buttons').addEventListener('click', (event) => {
     const { target } = event;
@@ -224,7 +220,7 @@ document.querySelector('.calculator-buttons').addEventListener('click', (event) 
             deleteLastSymbol();
             break;
         case target.classList.contains('all-clear'):
-            resetCalculator();
+            location.reload();
             break;
         case target.classList.contains('equal'):
             handleEqual();
@@ -236,7 +232,12 @@ document.querySelector('.calculator-buttons').addEventListener('click', (event) 
             inputDigit(target.value);
             break;
     }
+
+    if (calculator.result) {
+        display.value = calculator.result;
+    } else {
+        display.value = calculator.displayValue;
+    }
 });
 
-display.value = calculator.displayValue;
 
